@@ -39,7 +39,7 @@ export default function Header({}: Props) {
           <p className="hidden md:inline-flex cursor-pointer">Sell</p>
           <p className="hidden md:inline-flex cursor-pointer">Watchlist</p>
 
-          <Link href="/addItem" className="flex items-center hover:link">
+          <Link href="/create-item" className="flex items-center hover:link">
             Add to inventory
             <ChevronDownIcon className="h-4" />
           </Link>
@@ -79,7 +79,7 @@ export default function Header({}: Props) {
           Search
         </button>
 
-        <Link href="/create">
+        <Link href="/sell-item">
           <button className="border-2 border-blue-600 px-5 md:px-10 py-2 text-blue-600 hover:bg-blue-600/50 hover:text-white cursor-pointer">
             List Item
           </button>
@@ -101,6 +101,7 @@ export default function Header({}: Props) {
         <p className="link hidden xl:inline">Other</p>
         <p className="link">More</p>
       </section>
+      <hr />
     </div>
   );
 }
