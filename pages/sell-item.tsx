@@ -1,4 +1,4 @@
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useEffect, useState } from "react";
 import {
   useAddress,
   useContract,
@@ -12,6 +12,7 @@ import {
 import { NFT, NATIVE_TOKEN_ADDRESS } from "@thirdweb-dev/sdk";
 import { useRouter } from "next/router";
 import clsx from "clsx";
+import { Toaster, toast } from "react-hot-toast";
 
 import Header from "../components/Header";
 import { contracts } from "../config/thirdweb";
@@ -30,7 +31,10 @@ function SellItemPage({}: Props) {
     "nft-collection"
   );
 
-  const ownNfts = useOwnedNFTs(collectionContract, address);
+  const { data: ownNfts, isLoading } = useOwnedNFTs(
+    collectionContract,
+    address
+  );
   const [selected, setSelected] = useState<NFT>();
   const [loadingSubmit, setLoadingSubmit] = useState(false);
 
@@ -39,6 +43,19 @@ function SellItemPage({}: Props) {
 
   const { mutate: createDirectListing } = useCreateDirectListing(contract);
   const { mutate: createAuctionListing } = useCreateAuctionListing(contract);
+
+  useEffect(() => {
+    let loadingID = "";
+    if (isLoading) {
+      loadingID = toast.loading("Loading...");
+    }
+    if (!isLoading) {
+      toast.remove(loadingID);
+    }
+    return () => {
+      toast.remove(loadingID);
+    };
+  }, [isLoading]);
 
   async function handleCreateListing(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -63,8 +80,10 @@ function SellItemPage({}: Props) {
       price: { value: price },
     } = form.elements;
 
+    let loadingID = "";
     if (listingType === "direct") {
       setLoadingSubmit(true);
+      loadingID = toast.loading("Processing...");
       createDirectListing(
         {
           assetContractAddress: contracts.collection!,
@@ -78,11 +97,18 @@ function SellItemPage({}: Props) {
         {
           onSuccess(data, variables, context) {
             setLoadingSubmit(false);
-            console.log("SUCCESS: ", data, variables, context);
+            toast.remove(loadingID);
+            toast.success("Listing Direct Item successfully", {
+              duration: 3000,
+            });
             router.replace("/");
           },
           onError(error, _variables, _context) {
             setLoadingSubmit(false);
+            toast.remove(loadingID);
+            toast.error("ERROR: Listing Direct Item failed", {
+              duration: 3000,
+            });
             console.error("ERROR: ", error);
           },
         }
@@ -90,6 +116,7 @@ function SellItemPage({}: Props) {
     }
     if (listingType === "auction") {
       setLoadingSubmit(true);
+      loadingID = toast.loading("Processing...");
       createAuctionListing(
         {
           assetContractAddress: contracts.collection!,
@@ -103,11 +130,19 @@ function SellItemPage({}: Props) {
         },
         {
           onSuccess(data, variables, context) {
+            toast.remove(loadingID);
+            toast.success("Listing Auction Item successfully", {
+              duration: 3000,
+            });
             setLoadingSubmit(false);
             console.log("SUCCESS: ", data, variables, context);
             router.replace("/");
           },
           onError(error, _variables, _context) {
+            toast.remove(loadingID);
+            toast.error("ERROR: Listing Auction Item failed", {
+              duration: 3000,
+            });
             setLoadingSubmit(false);
             console.error("ERROR: ", error);
           },
@@ -118,6 +153,7 @@ function SellItemPage({}: Props) {
 
   return (
     <>
+      <Toaster />
       <Header />
 
       <Layout>
@@ -131,7 +167,7 @@ function SellItemPage({}: Props) {
         <p>Below you will finde the NFT's you own in your wallet</p>
 
         <div className="flex overflow-x-auto space-x-2 p-4">
-          {ownNfts?.data?.map((nft) => {
+          {ownNfts?.map((nft) => {
             const { metadata } = nft;
             return (
               <div

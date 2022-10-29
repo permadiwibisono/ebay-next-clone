@@ -5,6 +5,9 @@ import {
   MediaRenderer,
 } from "@thirdweb-dev/react";
 import { ListingType } from "@thirdweb-dev/sdk";
+import Link from "next/link";
+import { useEffect, useRef } from "react";
+import { Toaster, toast } from "react-hot-toast";
 
 import Header from "../components/Header";
 import { contracts } from "../config/thirdweb";
@@ -12,22 +15,35 @@ import { contracts } from "../config/thirdweb";
 const Home = () => {
   const { contract } = useContract(contracts.marketplace, "marketplace");
   const { data: listings, isLoading: loading } = useActiveListings(contract);
+  const loadingRef = useRef<string>();
+
+  useEffect(() => {
+    if (loading) {
+      loadingRef.current = toast.loading("Loading...");
+    }
+    if (!loading) {
+      toast.remove(loadingRef.current);
+      loadingRef.current = undefined;
+    }
+    return () => {
+      toast.remove(loadingRef.current);
+      loadingRef.current = undefined;
+    };
+  }, [loading]);
 
   return (
-    <div className="">
+    <>
+      <Toaster />
       <Header />
       <main className="max-w-6xl mx-auto py-2 px-6">
-        {loading ? (
-          <p className="text-center animate-pulse text-blue-500">
-            Loading listings...
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mx-auto">
-            {listings?.map((listing) => (
-              <div
-                key={listing.id}
-                className="flex flex-col card hover:scale-105 transition-all duration-150 ease-out"
-              >
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mx-auto">
+          {listings?.map((listing) => (
+            <Link
+              key={listing.id}
+              href={`/listing/${listing.id}`}
+              className="flex flex-col card hover:scale-105 transition-all duration-150 ease-out"
+            >
+              <div>
                 <div className="flex flex-1 flex-col pb-2 items-center">
                   <MediaRenderer className="w-44" src={listing.asset.image} />
                 </div>
@@ -65,11 +81,11 @@ const Home = () => {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </Link>
+          ))}
+        </div>
       </main>
-    </div>
+    </>
   );
 };
 

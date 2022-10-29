@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useAddress, useContract } from "@thirdweb-dev/react";
 import clsx from "clsx";
+import { Toaster, toast } from "react-hot-toast";
 
 import { contracts } from "../config/thirdweb";
 import Header from "../components/Header";
@@ -31,7 +32,7 @@ function CreateItemPage({}: Props) {
     if (loadingSubmit) return;
 
     if (!image) {
-      alert("Please select an image");
+      toast.error("Please select an image", { duration: 3000 });
       return;
     }
 
@@ -53,24 +54,26 @@ function CreateItemPage({}: Props) {
       image, // URL or file
     };
 
+    setLoadingSubmit(true);
+    const val = toast.loading("Processing...");
     try {
-      setLoadingSubmit(true);
-      const tx = await contract.mintTo(address, metadata);
-      const receipt = tx.receipt;
-      const tokenId = tx.id;
-      const nft = await tx.data();
-      console.log("SUCCESS: ", receipt, tokenId, nft);
+      await contract.mintTo(address, metadata);
       setLoadingSubmit(false);
+      toast.remove(val);
+      toast.success("Mint an Item successfully", { duration: 3000 });
 
       router.replace("/");
     } catch (error) {
       setLoadingSubmit(false);
+      toast.remove(val);
+      toast.error("ERROR: Mint an Item failed", { duration: 3000 });
       console.error(error);
     }
   }
 
   return (
     <>
+      <Toaster />
       <Header />
       <Layout>
         <h1 className="text-4xl font-bold">Add an Item to the Marketplace</h1>
